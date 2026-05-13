@@ -1,0 +1,21 @@
+# Git
+.git
+.gitignore
+
+# Dependencies (if any)
+vendor
+node_modules
+
+# Environment files
+.env
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (optional safety)
+Dockerfile
+docker-compose.yml
