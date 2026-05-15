@@ -1,52 +1,137 @@
 <?php
 session_start();
+
 include 'db.php';
 
-if (!isset($_SESSION['phone'])) {
+$phone = "";
+
+// =========================
+// DETECT FLOW
+// =========================
+
+if (isset($_SESSION['register_phone'])) {
+
+    $phone = $_SESSION['register_phone'];
+    $mode = "register";
+
+}
+elseif (isset($_SESSION['login_phone'])) {
+
+    $phone = $_SESSION['login_phone'];
+    $mode = "login";
+
+}
+else {
+
     header("Location: index.php");
     exit();
+
 }
 
-$phone = $_SESSION['phone'];
-$message = "";
+// =========================
+// VERIFY OTP
+// =========================
 
-if (isset($_POST['verify'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-    $entered_otp = $_POST['otp'];
+    $otp = mysqli_real_escape_string($conn, $_POST['otp']);
 
-    $query = "SELECT * FROM students WHERE phone='$phone' AND otp='$entered_otp'";
-    $result = mysqli_query($conn, $query);
+    $query = mysqli_query($conn,
+        "SELECT * FROM students
+         WHERE phone='$phone'
+         AND otp='$otp'"
+    );
 
-    if (mysqli_num_rows($result) > 0) {
+    if (mysqli_num_rows($query) > 0) {
 
-        mysqli_query($conn, "UPDATE students SET verified=1 WHERE phone='$phone'");
+        // =========================
+        // CLEAR OTP
+        // =========================
 
-        header("Location: dashboard.php");
-        exit();
+        mysqli_query($conn,
+            "UPDATE students
+             SET otp=NULL
+             WHERE phone='$phone'"
+        );
+
+        // =========================
+        // REGISTER FLOW
+        // =========================
+
+        if ($mode == "register") {
+
+            // VERIFY STUDENT
+            mysqli_query($conn,
+                "UPDATE students
+                 SET verified=1
+                 WHERE phone='$phone'"
+            );
+
+            $_SESSION['phone'] = $phone;
+
+            unset($_SESSION['register_phone']);
+
+            header("Location: index.php");
+            exit();
+
+        }
+
+        // =========================
+        // LOGIN FLOW
+        // =========================
+
+        elseif ($mode == "login") {
+
+            $_SESSION['phone'] = $phone;
+
+            unset($_SESSION['login_phone']);
+
+            header("Location: student_dashboard.php");
+            exit();
+
+        }
 
     } else {
-        $message = "Invalid OTP Code";
+
+        $error = "Invalid OTP";
+
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify OTP</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
 <div class="container">
-    <h2>OTP Verification</h2>
 
-    <p><?php echo $message; ?></p>
+    <h1>Verify OTP</h1>
+
+    <?php
+    if (!empty($error)) {
+        echo "<p style='color:red;'>$error</p>";
+    }
+    ?>
 
     <form method="POST">
-        <input type="text" name="otp" placeholder="Enter OTP" required>
-        <button type="submit" name="verify">Verify OTP</button>
+
+        <input type="text"
+               name="otp"
+               placeholder="Enter OTP"
+               required>
+
+        <button type="submit">
+            Verify
+        </button>
+
     </form>
+
 </div>
 
 </body>

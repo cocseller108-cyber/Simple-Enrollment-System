@@ -16,6 +16,5 @@ node_modules
 .DS_Store
 Thumbs.db
 
-# Docker files (optional safety)
-Dockerfile
+# Docker Compose is local-only for this project.
 docker-compose.yml
