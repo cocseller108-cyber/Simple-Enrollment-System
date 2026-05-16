@@ -6,10 +6,10 @@ $otp_expiry_seconds = 60;
 
 $credentials = $_SESSION['new_student_credentials'] ?? null;
 
-// FIX: ensure phone always exists
+// get phone safely
 $phone = $_SESSION['register_phone'] ?? $_SESSION['login_phone'] ?? "";
 
-// fallback safety
+// redirect safety
 if (empty($phone) && empty($credentials)) {
     header("Location: index.php");
     exit();
@@ -24,54 +24,18 @@ if (!empty($credentials)) {
     $mode = "login";
 }
 
-// create timer if not set
+// init timer
 if (!isset($_SESSION['otp_time'])) {
     $_SESSION['otp_time'] = time();
 }
 
 /* =========================
-   RESEND OTP
+   VERIFY OTP ONLY
 ========================= */
-if (isset($_POST['resend_otp'])) {
-
-    $elapsed = time() - $_SESSION['otp_time'];
-
-    if ($elapsed < $otp_expiry_seconds) {
-
-        $remaining = $otp_expiry_seconds - $elapsed;
-        $error = "Please wait {$remaining} seconds before resending.";
-
-    } else {
-
-        $new_otp = rand(100000, 999999);
-
-        $update = mysqli_query($conn,
-            "UPDATE students
-             SET otp='$new_otp'
-             WHERE phone='$phone'"
-        );
-
-        if ($update) {
-
-            // SEND SMS HERE
-            // send_sms($phone, "Your OTP is: $new_otp");
-
-            $_SESSION['otp_time'] = time(); // reset timer
-            $success = "New OTP sent successfully.";
-
-        } else {
-            $error = "Failed to resend OTP.";
-        }
-    }
-}
-
-/* =========================
-   VERIFY OTP
-========================= */
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['resend_otp'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ((time() - $_SESSION['otp_time']) > $otp_expiry_seconds) {
-        $error = "OTP expired. Please resend a new code.";
+        $error = "OTP expired. Please request a new OTP.";
     } else {
 
         $otp = mysqli_real_escape_string($conn, $_POST['otp']);
@@ -92,9 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['resend_otp'])) {
                  WHERE phone='$phone'"
             );
 
-            /* =========================
-               REGISTER FLOW
-            ========================= */
+            // REGISTER FLOW
             if ($mode == "register") {
 
                 $student_id = $student['student_id'];
@@ -114,7 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['resend_otp'])) {
 
                 if (empty($student['password_hash'])) {
 
-                    $temporary_password = substr(str_shuffle("ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"), 0, 10);
+                    $temporary_password = substr(str_shuffle(
+                        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
+                    ), 0, 10);
 
                     $hash = password_hash($temporary_password, PASSWORD_DEFAULT);
 
@@ -147,9 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['resend_otp'])) {
                 exit();
             }
 
-            /* =========================
-               LOGIN FLOW
-            ========================= */
+            // LOGIN FLOW
             if ($mode == "login") {
 
                 $_SESSION['student_id'] = $student['student_id'];
@@ -201,7 +163,6 @@ if ($remaining_time < 0) $remaining_time = 0;
     <h1>Verify OTP</h1>
 
     <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
-    <?php if (!empty($success)) echo "<p class='success'>$success</p>"; ?>
 
     <form method="POST">
         <input type="text" name="otp" placeholder="Enter OTP" required>
@@ -209,15 +170,6 @@ if ($remaining_time < 0) $remaining_time = 0;
     </form>
 
     <p id="timer"></p>
-
-    <form method="POST">
-        <button type="submit"
-                name="resend_otp"
-                id="resendBtn"
-                <?php if ($remaining_time > 0) echo "disabled"; ?>>
-            Resend OTP
-        </button>
-    </form>
 
 <?php } ?>
 
