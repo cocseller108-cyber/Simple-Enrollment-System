@@ -16,11 +16,10 @@ function updateTimer() {
 
     } else {
 
-        timer.innerHTML = "You can now resend the OTP.";
+        timer.innerHTML = "You can now resend OTP.";
         resendBtn.disabled = false;
     }
 }
 
 updateTimer();
-
 setInterval(updateTimer, 1000);
