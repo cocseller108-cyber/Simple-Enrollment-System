@@ -1,10 +1,10 @@
 const form = document.getElementById("enrollmentForm");
-const birthdateInput = document.getElementById("birthdate");
-const ageInput = document.getElementById("age");
-const stepButtons = document.querySelectorAll(".step-indicator");
-const formMessage = document.getElementById("formMessage");
+const birthdate = document.getElementById("birthdate");
+const age = document.getElementById("age");
+const message = document.getElementById("formMessage");
+const reviewGrid = document.getElementById("reviewGrid");
 
-const fieldLabels = {
+const fieldNames = {
     firstname: "First name",
     lastname: "Last name",
     birthdate: "Birthdate",
@@ -21,72 +21,76 @@ const fieldLabels = {
     school_year: "School year"
 };
 
-function showMessage(message) {
-    if (!formMessage) {
-        return;
-    }
-
-    formMessage.textContent = message;
+function showMessage(text) {
+    message.textContent = text;
 }
 
-function clearMessage() {
-    showMessage("");
+function fieldName(field) {
+    return fieldNames[field.name] || "This field";
 }
 
-function setStep(stepNumber) {
-    document.querySelectorAll(".form-step").forEach((step) => {
+function goToStep(stepNumber) {
+    document.querySelectorAll(".form-step").forEach(function (step) {
         step.classList.remove("active");
     });
 
     document.getElementById("step" + stepNumber).classList.add("active");
 
-    stepButtons.forEach((button, index) => {
+    document.querySelectorAll(".step-indicator").forEach(function (button, index) {
         button.classList.toggle("active", index < stepNumber);
     });
 
-    clearMessage();
+    showMessage("");
 }
 
-function getFieldLabel(field) {
-    return fieldLabels[field.name] || "This field";
+function checkPhone(value) {
+    return /^(09\d{9}|\+639\d{9})$/.test(value);
 }
 
-function isValidPhone(value) {
-    return /^(09\d{9}|\+639\d{9})$/.test(value.trim());
+function checkSchoolYear(value) {
+    return /^\d{4}-\d{4}$/.test(value);
 }
 
-function isValidSchoolYear(value) {
-    return /^\d{4}-\d{4}$/.test(value.trim());
+function getFieldError(field) {
+    const value = field.value.trim();
+
+    if (field.required && value === "") {
+        return fieldName(field) + " is required.";
+    }
+
+    if (field.type === "email" && value !== "" && !field.checkValidity()) {
+        return "Enter a valid email address.";
+    }
+
+    if ((field.name === "phone" || field.name === "guardian_phone") && !checkPhone(value)) {
+        return fieldName(field) + " must use 09XXXXXXXXX or +639XXXXXXXXX format.";
+    }
+
+    if (field.name === "school_year" && !checkSchoolYear(value)) {
+        return "School year must use the format 2026-2027.";
+    }
+
+    if (field.name === "age" && (Number(value) < 10 || Number(value) > 80)) {
+        return "Please check the birthdate. The computed age looks invalid.";
+    }
+
+    return "";
 }
 
 function validateField(field) {
-    const value = field.value.trim();
-    let message = "";
-
-    if (field.hasAttribute("required") && value === "") {
-        message = `${getFieldLabel(field)} is required.`;
-    } else if (field.type === "email" && value !== "" && !field.checkValidity()) {
-        message = "Enter a valid email address.";
-    } else if ((field.name === "phone" || field.name === "guardian_phone") && !isValidPhone(value)) {
-        message = `${getFieldLabel(field)} must use 09XXXXXXXXX or +639XXXXXXXXX format.`;
-    } else if (field.name === "school_year" && !isValidSchoolYear(value)) {
-        message = "School year must use the format 2026-2027.";
-    } else if (field.name === "age" && (Number(value) < 10 || Number(value) > 80)) {
-        message = "Please check the birthdate. The computed age looks invalid.";
-    }
-
-    field.classList.toggle("invalid", message !== "");
-    return message;
+    const error = getFieldError(field);
+    field.classList.toggle("invalid", error !== "");
+    return error;
 }
 
-function validateVisibleStep(stepId) {
-    const fields = document.querySelectorAll("#" + stepId + " input, #" + stepId + " select");
+function validateStep(stepNumber) {
+    const fields = document.querySelectorAll("#step" + stepNumber + " input, #step" + stepNumber + " select");
     let firstError = "";
 
-    fields.forEach((field) => {
+    fields.forEach(function (field) {
         const error = validateField(field);
 
-        if (!firstError && error) {
+        if (firstError === "" && error !== "") {
             firstError = error;
         }
     });
@@ -96,23 +100,33 @@ function validateVisibleStep(stepId) {
 }
 
 function updateAge() {
-    const birthdate = new Date(birthdateInput.value);
-    const today = new Date();
-    let age = today.getFullYear() - birthdate.getFullYear();
-    const month = today.getMonth() - birthdate.getMonth();
+    const selectedDate = new Date(birthdate.value);
 
-    if (month < 0 || (month === 0 && today.getDate() < birthdate.getDate())) {
-        age--;
+    if (birthdate.value === "") {
+        age.value = "";
+        return;
     }
 
-    ageInput.value = Number.isFinite(age) ? age : "";
-    validateField(ageInput);
+    const today = new Date();
+    let computedAge = today.getFullYear() - selectedDate.getFullYear();
+
+    const birthdayNotYetPassed =
+        today.getMonth() < selectedDate.getMonth() ||
+        (today.getMonth() === selectedDate.getMonth() && today.getDate() < selectedDate.getDate());
+
+    if (birthdayNotYetPassed) {
+        computedAge--;
+    }
+
+    age.value = computedAge;
+    validateField(age);
 }
 
-function renderReview() {
+function showReview() {
     const data = new FormData(form);
-    const fields = [
-        ["Full Name", `${data.get("firstname")} ${data.get("middlename")} ${data.get("lastname")}`.replace(/\s+/g, " ").trim()],
+
+    const rows = [
+        ["Full Name", [data.get("firstname"), data.get("middlename"), data.get("lastname")].join(" ").replace(/\s+/g, " ").trim()],
         ["Birthdate", data.get("birthdate")],
         ["Age", data.get("age")],
         ["Gender", data.get("gender")],
@@ -124,58 +138,66 @@ function renderReview() {
         ["School Year", data.get("school_year")]
     ];
 
-    document.getElementById("reviewGrid").innerHTML = fields.map(([label, value]) => `
-        <article>
-            <span>${label}</span>
-            <strong>${value || "Not provided"}</strong>
-        </article>
-    `).join("");
+    let html = "";
+
+    rows.forEach(function (row) {
+        const label = row[0];
+        const value = row[1] || "Not provided";
+
+        html += "<article>";
+        html += "<span>" + label + "</span>";
+        html += "<strong>" + value + "</strong>";
+        html += "</article>";
+    });
+
+    reviewGrid.innerHTML = html;
 }
 
-document.querySelectorAll("[data-form-action]").forEach((button) => {
-    button.addEventListener("click", () => {
-        const action = button.dataset.formAction;
+function handleButtonClick(button) {
+    const action = button.dataset.formAction;
 
-        if (action === "next" && validateVisibleStep("step1")) {
-            setStep(2);
-        }
+    if (action === "next" && validateStep(1)) {
+        goToStep(2);
+    }
 
-        if (action === "previous") {
-            setStep(1);
-        }
+    if (action === "previous") {
+        goToStep(1);
+    }
 
-        if (action === "academic") {
-            setStep(2);
-        }
+    if (action === "academic") {
+        goToStep(2);
+    }
 
-        if (action === "review" && validateVisibleStep("step2")) {
-            renderReview();
-            setStep(3);
-        }
+    if (action === "review" && validateStep(2)) {
+        showReview();
+        goToStep(3);
+    }
+}
+
+document.querySelectorAll("[data-form-action]").forEach(function (button) {
+    button.addEventListener("click", function () {
+        handleButtonClick(button);
     });
 });
 
-birthdateInput.addEventListener("change", updateAge);
+birthdate.addEventListener("change", updateAge);
 
-form.addEventListener("input", (event) => {
+form.addEventListener("input", function (event) {
     event.target.classList.remove("invalid");
-    clearMessage();
+    showMessage("");
 });
 
-form.addEventListener("submit", (event) => {
-    const firstStepValid = validateVisibleStep("step1");
-    const secondStepValid = validateVisibleStep("step2");
-
-    if (!firstStepValid) {
+form.addEventListener("submit", function (event) {
+    if (!validateStep(1)) {
         event.preventDefault();
-        setStep(1);
-        validateVisibleStep("step1");
+        goToStep(1);
+        validateStep(1);
         return;
     }
 
-    if (!secondStepValid) {
+    if (!validateStep(2)) {
         event.preventDefault();
-        setStep(2);
-        validateVisibleStep("step2");
+        goToStep(2);
+        validateStep(2);
     }
 });
