@@ -80,8 +80,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $temporary_password = "";
 
             if (empty($student_id)) {
-                $student_id = "KSHS-" . date("Y") . "-" . str_pad((string) $student['id'], 5, "0", STR_PAD_LEFT);
-            }
+
+    do {
+
+        $student_id = "STUD" . rand(1000, 9999);
+
+        $check = mysqli_query($conn,
+            "SELECT id FROM students
+             WHERE student_id='$student_id'"
+        );
+
+    } while (mysqli_num_rows($check) > 0);
+}
 
             if (empty($student['password_hash'])) {
                 $temporary_password = generateStudentPassword();
