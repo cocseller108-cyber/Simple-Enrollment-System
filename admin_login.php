@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <h1>Admin Login</h1>
 
-    <?php if (!empty($error)) echo "<p style='color:red;'>$error</p>"; ?>
+    <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
 
     <form method="POST">
         <input type="text" name="username" placeholder="Admin Username" required>

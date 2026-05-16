@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS students (
+    id INT NOT NULL AUTO_INCREMENT,
+    firstname VARCHAR(100) NOT NULL,
+    middlename VARCHAR(100) NULL,
+    lastname VARCHAR(100) NOT NULL,
+    birthdate DATE NOT NULL,
+    age INT NULL,
+    gender VARCHAR(20) NOT NULL,
+    nationality VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    phone VARCHAR(30) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    guardian_phone VARCHAR(30) NOT NULL,
+    grade_level VARCHAR(20) NOT NULL,
+    strand VARCHAR(100) NOT NULL,
+    previous_school VARCHAR(150) NOT NULL,
+    school_year VARCHAR(20) NOT NULL,
+    otp VARCHAR(10) NULL,
+    verified TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY unique_phone (phone)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

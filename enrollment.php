@@ -46,7 +46,7 @@
                 <button class="step-indicator" type="button" data-step-label="3">Review</button>
             </div>
 
-            <form action="enroll.php" method="POST" id="enrollmentForm">
+            <form action="enroll.php" method="POST" id="enrollmentForm" novalidate>
                 <div class="form-step active" id="step1">
                     <div class="form-section-heading">
                         <p class="eyebrow">Step 1</p>
@@ -116,7 +116,7 @@
 
                     <div class="form-actions">
                         <a class="button secondary" href="index.php">Cancel</a>
-                        <button class="button primary" type="button" onclick="nextStep()">Continue</button>
+                        <button class="button primary" type="button" data-form-action="next">Continue</button>
                     </div>
                 </div>
 
@@ -160,8 +160,8 @@
                     </div>
 
                     <div class="form-actions">
-                        <button class="button secondary" type="button" onclick="prevStep()">Back</button>
-                        <button class="button primary" type="button" onclick="reviewStep()">Review Application</button>
+                        <button class="button secondary" type="button" data-form-action="previous">Back</button>
+                        <button class="button primary" type="button" data-form-action="review">Review Application</button>
                     </div>
                 </div>
 
@@ -179,8 +179,10 @@
                         By submitting, you confirm that all information is true and correct.
                     </div>
 
+                    <p class="form-message" id="formMessage" aria-live="polite"></p>
+
                     <div class="form-actions">
-                        <button class="button secondary" type="button" onclick="backToAcademic()">Back</button>
+                        <button class="button secondary" type="button" data-form-action="academic">Back</button>
                         <button class="button primary" type="submit">Submit Enrollment</button>
                     </div>
                 </div>
@@ -188,98 +190,6 @@
         </section>
     </main>
 
-    <script>
-        const birthdateInput = document.getElementById("birthdate");
-        const ageInput = document.getElementById("age");
-        const stepButtons = document.querySelectorAll(".step-indicator");
-        const form = document.getElementById("enrollmentForm");
-
-        birthdateInput.addEventListener("change", function() {
-            const birthdate = new Date(this.value);
-            const today = new Date();
-            let age = today.getFullYear() - birthdate.getFullYear();
-            const month = today.getMonth() - birthdate.getMonth();
-
-            if (month < 0 || (month === 0 && today.getDate() < birthdate.getDate())) {
-                age--;
-            }
-
-            ageInput.value = Number.isFinite(age) ? age : "";
-        });
-
-        function setStep(stepNumber) {
-            document.querySelectorAll(".form-step").forEach((step) => {
-                step.classList.remove("active");
-            });
-
-            document.getElementById("step" + stepNumber).classList.add("active");
-
-            stepButtons.forEach((button, index) => {
-                button.classList.toggle("active", index < stepNumber);
-            });
-        }
-
-        function validateVisibleStep(stepId) {
-            const fields = document.querySelectorAll("#" + stepId + " input, #" + stepId + " select");
-            let isValid = true;
-
-            fields.forEach((field) => {
-                field.classList.remove("invalid");
-                if (!field.checkValidity()) {
-                    field.classList.add("invalid");
-                    isValid = false;
-                }
-            });
-
-            return isValid;
-        }
-
-        function nextStep() {
-            if (validateVisibleStep("step1")) {
-                setStep(2);
-            }
-        }
-
-        function prevStep() {
-            setStep(1);
-        }
-
-        function backToAcademic() {
-            setStep(2);
-        }
-
-        function reviewStep() {
-            if (!validateVisibleStep("step2")) {
-                return;
-            }
-
-            const data = new FormData(form);
-            const fields = [
-                ["Full Name", `${data.get("firstname")} ${data.get("middlename")} ${data.get("lastname")}`.replace(/\s+/g, " ").trim()],
-                ["Birthdate", data.get("birthdate")],
-                ["Age", data.get("age")],
-                ["Gender", data.get("gender")],
-                ["Phone", data.get("phone")],
-                ["Email", data.get("email")],
-                ["Grade Level", data.get("grade_level")],
-                ["Strand", data.get("strand")],
-                ["Previous School", data.get("previous_school")],
-                ["School Year", data.get("school_year")]
-            ];
-
-            document.getElementById("reviewGrid").innerHTML = fields.map(([label, value]) => `
-                <article>
-                    <span>${label}</span>
-                    <strong>${value || "Not provided"}</strong>
-                </article>
-            `).join("");
-
-            setStep(3);
-        }
-
-        form.addEventListener("input", (event) => {
-            event.target.classList.remove("invalid");
-        });
-    </script>
+    <script src="assets/js/enrollment.js"></script>
 </body>
 </html>

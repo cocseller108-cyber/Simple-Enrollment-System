@@ -198,7 +198,7 @@ $students = mysqli_query($conn,
                 |
 
                 <a href="delete_student.php?id=<?php echo $row['id']; ?>"
-                   onclick="return confirm('Delete this student?')">
+                   data-confirm-delete="Delete this student record?">
 
                     Delete
 
@@ -214,5 +214,6 @@ $students = mysqli_query($conn,
 
 </div>
 
+<script src="assets/js/admin-dashboard.js"></script>
 </body>
 </html>

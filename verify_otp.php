@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <?php
     if (!empty($error)) {
-        echo "<p style='color:red;'>$error</p>";
+        echo "<p class='error'>$error</p>";
     }
     ?>
 
