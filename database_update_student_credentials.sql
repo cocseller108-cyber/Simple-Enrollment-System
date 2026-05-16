@@ -1,3 +1,0 @@
--- Replaced by the normalized schema in database.sql.
--- Student credentials now live in student_accounts:
--- student_accounts.student_number and student_accounts.password_hash.
