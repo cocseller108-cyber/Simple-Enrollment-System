@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS students (
+CREATE TABLE students (
     id INT NOT NULL AUTO_INCREMENT,
     firstname VARCHAR(100) NOT NULL,
     middlename VARCHAR(100) NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS students (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS student_contacts (
+CREATE TABLE student_contacts (
     id INT NOT NULL AUTO_INCREMENT,
     student_id INT NOT NULL,
     phone VARCHAR(30) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS student_contacts (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS guardians (
+CREATE TABLE guardians (
     id INT NOT NULL AUTO_INCREMENT,
     student_id INT NOT NULL,
     guardian_phone VARCHAR(30) NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS guardians (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS student_accounts (
+CREATE TABLE student_accounts (
     id INT NOT NULL AUTO_INCREMENT,
     student_id INT NOT NULL,
     student_number VARCHAR(30) NULL,
@@ -51,14 +51,14 @@ CREATE TABLE IF NOT EXISTS student_accounts (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS grade_levels (
+CREATE TABLE grade_levels (
     id INT NOT NULL AUTO_INCREMENT,
     level VARCHAR(20) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY unique_grade_level (level)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS strands (
+CREATE TABLE strands (
     id INT NOT NULL AUTO_INCREMENT,
     code VARCHAR(30) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -66,14 +66,14 @@ CREATE TABLE IF NOT EXISTS strands (
     UNIQUE KEY unique_strand_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS school_years (
+CREATE TABLE school_years (
     id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(20) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY unique_school_year (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS enrollments (
+CREATE TABLE enrollments (
     id INT NOT NULL AUTO_INCREMENT,
     student_id INT NOT NULL,
     grade_level_id INT NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS enrollments (
         FOREIGN KEY (school_year_id) REFERENCES school_years(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS otp_codes (
+CREATE TABLE otp_codes (
     id INT NOT NULL AUTO_INCREMENT,
     student_id INT NOT NULL,
     phone VARCHAR(30) NOT NULL,
@@ -112,9 +112,11 @@ CREATE TABLE IF NOT EXISTS otp_codes (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT IGNORE INTO grade_levels (level) VALUES ('11'), ('12');
+INSERT INTO grade_levels (level) VALUES
+('11'),
+('12');
 
-INSERT IGNORE INTO strands (code, name) VALUES
+INSERT INTO strands (code, name) VALUES
 ('ABM', 'ABM'),
 ('STEM', 'STEM'),
 ('HUMSS', 'HUMSS'),
