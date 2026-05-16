@@ -11,7 +11,7 @@
         <a class="brand" href="index.php">
             <span class="brand-mark">N</span>
             <span>
-                <strong>Northbridge</strong>
+                <strong>King Senior High School</strong>
                 <small>Enrollment Office</small>
             </span>
         </a>
