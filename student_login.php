@@ -4,23 +4,28 @@ include 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-    $phone = $_POST['phone'];
+    $student_id = mysqli_real_escape_string($conn, $_POST['student_id']);
+    $password = $_POST['password'];
 
     $query = mysqli_query($conn,
         "SELECT * FROM students
-         WHERE phone='$phone'"
+         WHERE student_id='$student_id'
+         AND verified=1"
     );
 
     if (mysqli_num_rows($query) > 0) {
+        $student = mysqli_fetch_assoc($query);
 
-        $_SESSION['phone'] = $phone;
+        if (password_verify($password, $student['password_hash'])) {
+            $_SESSION['student_id'] = $student['student_id'];
 
-        header("Location: student_dashboard.php");
-        exit();
+            header("Location: student_dashboard.php");
+            exit();
+        }
 
-    } else {
-        echo "Student Not Found";
     }
+
+    $error = "Invalid Student ID or password.";
 }
 ?>
 
@@ -37,12 +42,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="container">
 
     <h1>Student Login</h1>
+    <p>Use the Student ID and temporary password issued after OTP verification.</p>
+
+    <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
 
     <form method="POST">
 
         <input type="text"
-               name="phone"
-               placeholder="Phone Number"
+               name="student_id"
+               placeholder="Student ID"
+               required>
+
+        <input type="password"
+               name="password"
+               placeholder="Password"
                required>
 
         <button type="submit">Login</button>

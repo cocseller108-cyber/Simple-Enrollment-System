@@ -121,7 +121,7 @@
                 <article>
                     <span>03</span>
                     <h3>Track status</h3>
-                    <p>Students can sign in using their phone number to review strand details and enrollment status.</p>
+                    <p>Students sign in using their issued Student ID and password to review strand details and enrollment status.</p>
                 </article>
             </div>
         </section>

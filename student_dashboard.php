@@ -2,15 +2,15 @@
 session_start();
 include 'db.php';
 
-if (!isset($_SESSION['phone'])) {
+if (!isset($_SESSION['student_id'])) {
     header("Location: student_login.php");
     exit();
 }
 
-$phone = $_SESSION['phone'];
+$student_id = mysqli_real_escape_string($conn, $_SESSION['student_id']);
 
 $query = mysqli_query($conn,
-    "SELECT * FROM students WHERE phone='$phone'"
+    "SELECT * FROM students WHERE student_id='$student_id'"
 );
 
 $student = mysqli_fetch_assoc($query);
@@ -113,6 +113,10 @@ $total_subjects = count($general_subjects) + count($strand_subjects);
 
     <section class="student-summary-grid" aria-label="Student enrollment summary">
         <article>
+            <span>Student ID</span>
+            <strong><?php echo htmlspecialchars($student['student_id']); ?></strong>
+        </article>
+        <article>
             <span>Student Name</span>
             <strong><?php echo htmlspecialchars($full_name); ?></strong>
         </article>
@@ -123,10 +127,6 @@ $total_subjects = count($general_subjects) + count($strand_subjects);
         <article>
             <span>Strand</span>
             <strong><?php echo htmlspecialchars($strand); ?></strong>
-        </article>
-        <article>
-            <span>School Year</span>
-            <strong><?php echo htmlspecialchars($student['school_year']); ?></strong>
         </article>
     </section>
 
@@ -156,6 +156,10 @@ $total_subjects = count($general_subjects) + count($strand_subjects);
             <div class="profile-card">
                 <h2>Student Details</h2>
                 <dl>
+                    <div>
+                        <dt>School Year</dt>
+                        <dd><?php echo htmlspecialchars($student['school_year']); ?></dd>
+                    </div>
                     <div>
                         <dt>Phone</dt>
                         <dd><?php echo htmlspecialchars($student['phone']); ?></dd>

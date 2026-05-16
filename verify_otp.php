@@ -4,12 +4,28 @@ session_start();
 include 'db.php';
 
 $phone = "";
+$credentials = $_SESSION['new_student_credentials'] ?? null;
+
+function generateStudentPassword($length = 10)
+{
+    $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    $password = '';
+
+    for ($i = 0; $i < $length; $i++) {
+        $password .= $characters[random_int(0, strlen($characters) - 1)];
+    }
+
+    return $password;
+}
 
 // =========================
 // DETECT FLOW
 // =========================
 
-if (isset($_SESSION['register_phone'])) {
+if (!empty($credentials)) {
+    $mode = "credentials";
+}
+elseif (isset($_SESSION['register_phone'])) {
 
     $phone = $_SESSION['register_phone'];
     $mode = "register";
@@ -43,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     );
 
     if (mysqli_num_rows($query) > 0) {
+        $student = mysqli_fetch_assoc($query);
 
         // =========================
         // CLEAR OTP
@@ -59,19 +76,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // =========================
 
         if ($mode == "register") {
+            $student_id = $student['student_id'];
+            $temporary_password = "";
 
-            // VERIFY STUDENT
-            mysqli_query($conn,
-                "UPDATE students
-                 SET verified=1
-                 WHERE phone='$phone'"
-            );
+            if (empty($student_id)) {
+                $student_id = "KSHS-" . date("Y") . "-" . str_pad((string) $student['id'], 5, "0", STR_PAD_LEFT);
+            }
 
-            $_SESSION['phone'] = $phone;
+            if (empty($student['password_hash'])) {
+                $temporary_password = generateStudentPassword();
+                $password_hash = mysqli_real_escape_string($conn, password_hash($temporary_password, PASSWORD_DEFAULT));
 
+                mysqli_query($conn,
+                    "UPDATE students
+                     SET student_id='$student_id',
+                         password_hash='$password_hash',
+                         verified=1
+                     WHERE phone='$phone'"
+                );
+            } else {
+                mysqli_query($conn,
+                    "UPDATE students
+                     SET student_id='$student_id',
+                         verified=1
+                     WHERE phone='$phone'"
+                );
+            }
+
+            $_SESSION['new_student_credentials'] = [
+                'student_id' => $student_id,
+                'password' => $temporary_password,
+            ];
             unset($_SESSION['register_phone']);
 
-            header("Location: index.php");
+            header("Location: verify_otp.php");
             exit();
 
         }
@@ -82,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         elseif ($mode == "login") {
 
-            $_SESSION['phone'] = $phone;
+            $_SESSION['student_id'] = $student['student_id'];
 
             unset($_SESSION['login_phone']);
 
@@ -111,6 +149,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <div class="container">
 
+    <?php if (!empty($credentials)) { ?>
+        <h1>Enrollment Verified</h1>
+        <p class="success">Your student portal account is ready. Save these credentials before continuing.</p>
+
+        <div class="credential-box">
+            <div>
+                <span>Student ID</span>
+                <strong><?php echo htmlspecialchars($credentials['student_id']); ?></strong>
+            </div>
+            <div>
+                <span>Temporary Password</span>
+                <strong><?php echo htmlspecialchars($credentials['password']); ?></strong>
+            </div>
+        </div>
+
+        <p>Use your Student ID and temporary password to access your dashboard.</p>
+        <a class="button primary" href="student_login.php">Go to Student Login</a>
+
+        <?php unset($_SESSION['new_student_credentials']); ?>
+    <?php } else { ?>
+
     <h1>Verify OTP</h1>
 
     <?php
@@ -131,6 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </button>
 
     </form>
+    <?php } ?>
 
 </div>
 

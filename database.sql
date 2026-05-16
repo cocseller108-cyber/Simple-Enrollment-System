@@ -1,5 +1,7 @@
 CREATE TABLE IF NOT EXISTS students (
     id INT NOT NULL AUTO_INCREMENT,
+    student_id VARCHAR(30) NULL,
+    password_hash VARCHAR(255) NULL,
     firstname VARCHAR(100) NOT NULL,
     middlename VARCHAR(100) NULL,
     lastname VARCHAR(100) NOT NULL,
@@ -19,5 +21,6 @@ CREATE TABLE IF NOT EXISTS students (
     verified TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
+    UNIQUE KEY unique_student_id (student_id),
     UNIQUE KEY unique_phone (phone)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

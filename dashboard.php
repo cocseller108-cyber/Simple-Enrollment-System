@@ -2,14 +2,14 @@
 session_start();
 include 'db.php';
 
-if (!isset($_SESSION['phone'])) {
+if (!isset($_SESSION['student_id'])) {
     header("Location: index.php");
     exit();
 }
 
-$phone = $_SESSION['phone'];
+$student_id = mysqli_real_escape_string($conn, $_SESSION['student_id']);
 
-$query = mysqli_query($conn, "SELECT * FROM students WHERE phone='$phone'");
+$query = mysqli_query($conn, "SELECT * FROM students WHERE student_id='$student_id'");
 $student = mysqli_fetch_assoc($query);
 ?>
 
@@ -28,6 +28,8 @@ $student = mysqli_fetch_assoc($query);
     <h1>Enrollment Successful</h1>
 
     <h2>Student Information</h2>
+
+    <p><strong>Student ID:</strong> <?php echo $student['student_id']; ?></p>
 
     <p>
         <strong>Full Name:</strong>

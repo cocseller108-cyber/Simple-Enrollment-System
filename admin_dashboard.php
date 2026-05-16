@@ -25,6 +25,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
     $where .= " AND (
         students.firstname LIKE '%$search%'
         OR students.lastname LIKE '%$search%'
+        OR students.student_id LIKE '%$search%'
         OR students.phone LIKE '%$search%'
     )";
 }
@@ -152,6 +153,7 @@ $students = mysqli_query($conn,
 
         <tr>
             <th>ID</th>
+            <th>Student ID</th>
             <th>Name</th>
             <th>Strand</th>
             <th>Grade</th>
@@ -164,6 +166,8 @@ $students = mysqli_query($conn,
         <tr>
 
             <td><?php echo $row['id']; ?></td>
+
+            <td><?php echo htmlspecialchars($row['student_id'] ?? 'Not issued'); ?></td>
 
             <td>
                 <?php
