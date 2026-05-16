@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'db.php';
+include 'database_helpers.php';
 
 if (!isset($_SESSION['admin'])) {
     header("Location: admin_login.php");
@@ -9,25 +10,37 @@ if (!isset($_SESSION['admin'])) {
 
 $id = (int)$_GET['id'];
 
-$query = mysqli_query($conn, "SELECT * FROM students WHERE id=$id");
-$student = mysqli_fetch_assoc($query);
+$student = get_student_profile_by_id($conn, $id);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-    $firstname = $_POST['firstname'];
-    $lastname = $_POST['lastname'];
-    $strand = $_POST['strand'];
-    $grade_level = $_POST['grade_level'];
-    $guardian_phone = $_POST['guardian_phone'];
+    $firstname = mysqli_real_escape_string($conn, $_POST['firstname']);
+    $lastname = mysqli_real_escape_string($conn, $_POST['lastname']);
+    $strand = mysqli_real_escape_string($conn, $_POST['strand']);
+    $grade_level = mysqli_real_escape_string($conn, $_POST['grade_level']);
+    $guardian_phone = mysqli_real_escape_string($conn, $_POST['guardian_phone']);
+
+    $grade_level_id = get_lookup_id($conn, 'grade_levels', 'level', $grade_level);
+    $strand_id = get_lookup_id($conn, 'strands', 'name', $strand);
 
     mysqli_query($conn, "
         UPDATE students SET
         firstname='$firstname',
-        lastname='$lastname',
-        strand='$strand',
-        grade_level='$grade_level',
-        guardian_phone='$guardian_phone'
+        lastname='$lastname'
         WHERE id=$id
+    ");
+
+    mysqli_query($conn, "
+        UPDATE enrollments SET
+        strand_id=$strand_id,
+        grade_level_id=$grade_level_id
+        WHERE student_id=$id
+    ");
+
+    mysqli_query($conn, "
+        UPDATE guardians SET
+        guardian_phone='$guardian_phone'
+        WHERE student_id=$id
     ");
 
     header("Location: admin_dashboard.php");

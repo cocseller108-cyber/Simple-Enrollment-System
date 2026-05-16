@@ -1,28 +1,22 @@
 <?php
 session_start();
 include 'db.php';
+include 'database_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $student_id = mysqli_real_escape_string($conn, $_POST['student_id']);
     $password = $_POST['password'];
 
-    $query = mysqli_query($conn,
-        "SELECT * FROM students
-         WHERE student_id='$student_id'
-         AND verified=1"
-    );
+    $student = get_student_profile_by_number($conn, $student_id);
 
-    if (mysqli_num_rows($query) > 0) {
-        $student = mysqli_fetch_assoc($query);
-
+    if (!empty($student) && (int) $student['verified'] === 1) {
         if (password_verify($password, $student['password_hash'])) {
             $_SESSION['student_id'] = $student['student_id'];
 
             header("Location: student_dashboard.php");
             exit();
         }
-
     }
 
     $error = "Invalid Student ID or password.";

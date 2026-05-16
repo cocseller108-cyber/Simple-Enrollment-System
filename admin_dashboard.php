@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'db.php';
+include 'database_helpers.php';
 
 if (!isset($_SESSION['admin']) || $_SESSION['admin'] !== true) {
     header("Location: admin_login.php");
@@ -23,10 +24,10 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
     $search = mysqli_real_escape_string($conn, $_GET['search']);
 
     $where .= " AND (
-        students.firstname LIKE '%$search%'
-        OR students.lastname LIKE '%$search%'
-        OR students.student_id LIKE '%$search%'
-        OR students.phone LIKE '%$search%'
+        s.firstname LIKE '%$search%'
+        OR s.lastname LIKE '%$search%'
+        OR sa.student_number LIKE '%$search%'
+        OR sc.phone LIKE '%$search%'
     )";
 }
 
@@ -35,7 +36,7 @@ if (isset($_GET['strand']) && !empty($_GET['strand'])) {
 
     $strand_filter = mysqli_real_escape_string($conn, $_GET['strand']);
 
-    $where .= " AND students.strand='$strand_filter'";
+    $where .= " AND st.name='$strand_filter'";
 }
 
 // GRADE FILTER
@@ -43,7 +44,7 @@ if (isset($_GET['grade_level']) && !empty($_GET['grade_level'])) {
 
     $grade_filter = mysqli_real_escape_string($conn, $_GET['grade_level']);
 
-    $where .= " AND students.grade_level='$grade_filter'";
+    $where .= " AND gl.level='$grade_filter'";
 }
 
 // =========================
@@ -51,10 +52,9 @@ if (isset($_GET['grade_level']) && !empty($_GET['grade_level'])) {
 // =========================
 
 $students = mysqli_query($conn,
-    "SELECT students.*
-     FROM students
+    student_profile_sql() . "
      $where
-     ORDER BY students.id ASC"
+     ORDER BY s.id ASC"
 );
 ?>
 

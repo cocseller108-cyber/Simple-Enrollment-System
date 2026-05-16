@@ -2,6 +2,7 @@
 session_start();
 include 'db.php';
 include 'common.php';
+include 'database_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
@@ -32,46 +33,64 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // OTP
     $otp = rand(100000, 999999);
 
-    // INSERT
-    $query = "INSERT INTO students(
-        firstname,
-        middlename,
-        lastname,
-        birthdate,
-        age,
-        gender,
-        nationality,
-        address,
-        phone,
-        email,
-        guardian_phone,
-        grade_level,
-        strand,
-        previous_school,
-        school_year,
-        otp,
-        verified
-    ) VALUES (
-        '$firstname',
-        '$middlename',
-        '$lastname',
-        '$birthdate',
-        '$age',
-        '$gender',
-        '$nationality',
-        '$address',
-        '$phone',
-        '$email',
-        '$guardian_phone',
-        '$grade_level',
-        '$strand',
-        '$previous_school',
-        '$school_year',
-        '$otp',
-        0
-    )";
+    mysqli_begin_transaction($conn);
 
-    if (mysqli_query($conn, $query)) {
+    try {
+        $grade_level_id = get_lookup_id($conn, 'grade_levels', 'level', $grade_level);
+        $strand_id = get_lookup_id($conn, 'strands', 'name', $strand);
+        $school_year_id = get_lookup_id($conn, 'school_years', 'name', $school_year);
+
+        mysqli_query($conn, "INSERT INTO students(
+            firstname,
+            middlename,
+            lastname,
+            birthdate,
+            age,
+            gender,
+            nationality,
+            address
+        ) VALUES (
+            '$firstname',
+            '$middlename',
+            '$lastname',
+            '$birthdate',
+            '$age',
+            '$gender',
+            '$nationality',
+            '$address'
+        )");
+
+        $student_db_id = mysqli_insert_id($conn);
+
+        mysqli_query($conn, "INSERT INTO student_contacts(student_id, phone, email)
+            VALUES ($student_db_id, '$phone', '$email')");
+
+        mysqli_query($conn, "INSERT INTO guardians(student_id, guardian_phone)
+            VALUES ($student_db_id, '$guardian_phone')");
+
+        mysqli_query($conn, "INSERT INTO student_accounts(student_id)
+            VALUES ($student_db_id)");
+
+        mysqli_query($conn, "INSERT INTO enrollments(
+            student_id,
+            grade_level_id,
+            strand_id,
+            school_year_id,
+            previous_school,
+            status
+        ) VALUES (
+            $student_db_id,
+            $grade_level_id,
+            $strand_id,
+            $school_year_id,
+            '$previous_school',
+            'Pending'
+        )");
+
+        mysqli_query($conn, "INSERT INTO otp_codes(student_id, phone, code, purpose)
+            VALUES ($student_db_id, '$phone', '$otp', 'register')");
+
+        mysqli_commit($conn);
 
         $_SESSION['register_phone'] = $phone;
 
@@ -80,7 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         header("Location: verify_otp.php");
         exit();
 
-    } else {
+    } catch (Throwable $error) {
+        mysqli_rollback($conn);
         echo "Error: " . mysqli_error($conn);
     }
 }

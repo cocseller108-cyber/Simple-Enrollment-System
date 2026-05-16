@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'db.php';
+include 'database_helpers.php';
 
 if (!isset($_SESSION['student_id'])) {
     header("Location: index.php");
@@ -9,8 +10,7 @@ if (!isset($_SESSION['student_id'])) {
 
 $student_id = mysqli_real_escape_string($conn, $_SESSION['student_id']);
 
-$query = mysqli_query($conn, "SELECT * FROM students WHERE student_id='$student_id'");
-$student = mysqli_fetch_assoc($query);
+$student = get_student_profile_by_number($conn, $student_id);
 ?>
 
 <!DOCTYPE html>

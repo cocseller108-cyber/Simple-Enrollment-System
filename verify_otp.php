@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'db.php';
+include 'database_helpers.php';
 
 $otp_expiry_seconds = 60;
 
@@ -40,20 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $otp = mysqli_real_escape_string($conn, $_POST['otp']);
 
-        $query = mysqli_query($conn,
-            "SELECT * FROM students
-             WHERE phone='$phone'
-             AND otp='$otp'"
-        );
+        $student = get_student_profile_by_phone_and_otp($conn, $phone, $otp);
 
-        if (mysqli_num_rows($query) > 0) {
-
-            $student = mysqli_fetch_assoc($query);
-
+        if (!empty($student)) {
+            $student_db_id = (int) $student['id'];
             mysqli_query($conn,
-                "UPDATE students
-                 SET otp=NULL
-                 WHERE phone='$phone'"
+                "DELETE FROM otp_codes
+                 WHERE student_id=$student_db_id
+                 AND phone='$phone'
+                 AND code='$otp'"
             );
 
             // REGISTER FLOW
@@ -68,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $student_id = "STUD" . rand(1000, 9999);
 
                         $check = mysqli_query($conn,
-                            "SELECT id FROM students WHERE student_id='$student_id'"
+                            "SELECT id FROM student_accounts WHERE student_number='$student_id'"
                         );
 
                     } while (mysqli_num_rows($check) > 0);
@@ -83,22 +79,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $hash = password_hash($temporary_password, PASSWORD_DEFAULT);
 
                     mysqli_query($conn,
-                        "UPDATE students
-                         SET student_id='$student_id',
-                             password_hash='$hash',
-                             verified=1
-                         WHERE phone='$phone'"
+                        "UPDATE student_accounts
+                         SET student_number='$student_id',
+                             password_hash='$hash'
+                         WHERE student_id=$student_db_id"
                     );
 
                 } else {
 
                     mysqli_query($conn,
-                        "UPDATE students
-                         SET student_id='$student_id',
-                             verified=1
-                         WHERE phone='$phone'"
+                        "UPDATE student_accounts
+                         SET student_number='$student_id'
+                         WHERE student_id=$student_db_id"
                     );
                 }
+
+                mysqli_query($conn,
+                    "UPDATE enrollments
+                     SET status='Verified'
+                     WHERE student_id=$student_db_id"
+                );
 
                 $_SESSION['new_student_credentials'] = [
                     'student_id' => $student_id,
