@@ -72,6 +72,14 @@ function get_student_profile_by_number($conn, $student_number)
     return mysqli_fetch_assoc($query);
 }
 
+function get_student_profile_by_phone($conn, $phone)
+{
+    $phone = mysqli_real_escape_string($conn, $phone);
+    $query = mysqli_query($conn, student_profile_sql() . " WHERE sc.phone='$phone' LIMIT 1");
+
+    return mysqli_fetch_assoc($query);
+}
+
 function get_student_profile_by_phone_and_otp($conn, $phone, $otp)
 {
     $phone = mysqli_real_escape_string($conn, $phone);

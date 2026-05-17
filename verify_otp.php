@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'db.php';
+include 'common.php';
 include 'database_helpers.php';
 
 $otp_expiry_seconds = 60;
@@ -35,7 +36,29 @@ if (!isset($_SESSION['otp_time'])) {
 ========================= */
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-    if ((time() - $_SESSION['otp_time']) > $otp_expiry_seconds) {
+    $action = $_POST['action'] ?? 'verify';
+
+    if ($action == 'resend') {
+        $student = get_student_profile_by_phone($conn, $phone);
+
+        if (empty($student)) {
+            $error = "No pending OTP request was found. Please submit the enrollment form again.";
+        } else {
+            $student_db_id = (int) $student['id'];
+            $otp = rand(100000, 999999);
+            $safe_phone = mysqli_real_escape_string($conn, $phone);
+            $safe_mode = mysqli_real_escape_string($conn, $mode);
+
+            mysqli_query($conn, "DELETE FROM otp_codes WHERE student_id=$student_db_id");
+            mysqli_query($conn, "INSERT INTO otp_codes(student_id, phone, code, purpose)
+                VALUES ($student_db_id, '$safe_phone', '$otp', '$safe_mode')");
+
+            $_SESSION['otp_time'] = time();
+            sendSMS($phone, "Your OTP Code is: $otp");
+
+            $success = "A new OTP was sent to your phone number.";
+        }
+    } elseif ((time() - $_SESSION['otp_time']) > $otp_expiry_seconds) {
         $error = "OTP expired. Please request a new OTP.";
     } else {
 
@@ -163,10 +186,17 @@ if ($remaining_time < 0) $remaining_time = 0;
     <h1>Verify OTP</h1>
 
     <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
+    <?php if (!empty($success)) echo "<p class='success'>$success</p>"; ?>
 
     <form method="POST">
+        <input type="hidden" name="action" value="verify">
         <input type="text" name="otp" placeholder="Enter OTP" required>
         <button type="submit">Verify</button>
+    </form>
+
+    <form method="POST">
+        <input type="hidden" name="action" value="resend">
+        <button type="submit">Resend OTP</button>
     </form>
 
     <p id="timer"></p>
