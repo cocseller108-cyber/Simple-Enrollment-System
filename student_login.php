@@ -53,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                required>
 
         <button type="submit">Login</button>
+        <a href="index.php">Back to Homepage</a>
 
     </form>
 
