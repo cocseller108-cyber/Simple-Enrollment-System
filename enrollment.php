@@ -9,7 +9,7 @@
 <body class="form-page">
     <header class="site-header compact">
         <a class="brand" href="index.php">
-            <span class="brand-mark">N</span>
+            <span class="brand-mark">K</span>
             <span>
                 <strong>King Senior High School</strong>
                 <small>Enrollment Office</small>
